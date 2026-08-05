@@ -1,0 +1,6 @@
+{
+  "name": "YuliApp",
+  "description": "Sensory play app for infants (9-12 months) featuring highly touch-responsive games: Animal Sounds (with microphone recording for parent customization), Music Piano, Family Photo Cards, and High-Contrast Colors.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

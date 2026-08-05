@@ -1,0 +1,35 @@
+# Build artifacts
+.gradle/
+build/
+app/build/
+app/release/
+*.iml
+.kotlin/
+
+# IDE files
+.idea/
+!.idea/codeStyles/
+!.idea/inspectionProfiles/
+*.iws
+*.ipr
+out/
+
+# Local configuration
+local.properties
+.env
+.env.local
+.env.*.local
+
+# Signing files
+*.jks
+*.keystore
+!debug.keystore # Opcional: solo si quieres compartir la clave de debug estándar
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Project specific
+captures/
+.externalNativeBuild/
+.cxx/

@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">YuliApp</string>
+    <string name="attribution_mic">Acceso al micrófono para grabar voces</string>
+</resources>
