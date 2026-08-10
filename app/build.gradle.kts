@@ -1,4 +1,4 @@
-import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
+﻿import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
 
 plugins {
   alias(libs.plugins.android.application)
@@ -28,7 +28,7 @@ android {
       val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
       storeFile = file(keystorePath)
       storePassword = System.getenv("STORE_PASSWORD")
-      keyAlias = "upload"
+      keyAlias = System.getenv("KEY_ALIAS") ?: "upload"
       keyPassword = System.getenv("KEY_PASSWORD")
     }
   }
