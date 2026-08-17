@@ -73,6 +73,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -115,6 +117,11 @@ fun YuliApp(viewModel: YuliAppViewModel) {
     val isParentMode by viewModel.isParentMode.collectAsState()
     val isAudioEnabled by viewModel.isAudioEnabled.collectAsState()
     val backgroundVideoPath by viewModel.backgroundVideoPath.collectAsState()
+    val showTutorial by viewModel.showTutorial.collectAsState()
+
+    if (showTutorial) {
+        TutorialDialog(onDismiss = { viewModel.showTutorial(false) })
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -1118,6 +1125,25 @@ fun HomeScreen(viewModel: YuliAppViewModel) {
             size = 130.dp
         ) {
             viewModel.setScreen("drawing")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Mini Tutorial Button
+        Button(
+            onClick = { viewModel.showTutorial(true) },
+            colors = ButtonDefaults.buttonColors(containerColor = com.example.ui.theme.MagicSun.copy(alpha = 0.9f)),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.padding(bottom = 8.dp)
+        ) {
+            Icon(Icons.Default.Lightbulb, null, tint = com.example.ui.theme.MagicPrimary, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                "¿CÓMO JUGAR? 💡",
+                color = com.example.ui.theme.MagicPrimary,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 12.sp
+            )
         }
     }
 }
@@ -2292,6 +2318,105 @@ fun AddFamilyMemberDialog(onDismiss: () -> Unit, onConfirm: (String, String, Str
         shape = RoundedCornerShape(24.dp)
     )
 }
+
+@Composable
+fun TutorialDialog(onDismiss: () -> Unit) {
+    val pages = listOf(
+        TutorialPage("Formas 🎨", "Toca colores y aprende figuras divertidas.", "🎨", com.example.ui.theme.MagicSecondary),
+        TutorialPage("La Granja 🐮", "Escucha animales reales y ¡graba tu propia voz!", "🐮", Color(0xFF4CAF50)),
+        TutorialPage("Piano 🎹", "Sigue las estrellas brillantes para tocar canciones.", "🌟", com.example.ui.theme.MagicTertiary),
+        TutorialPage("Dibujo 🖍️", "Estimulación táctil con trazos de colores mágicos.", "🖍️", Color(0xFF4CAF50)),
+        TutorialPage("Familia 👩", "Crea tarjetas con fotos y voces de tus seres queridos.", "💖", com.example.ui.theme.ToddleOrange),
+        TutorialPage("Modo Padres 🔒", "Mantén el candado para personalizar todo el juego.", "⚙️", Color.Gray)
+    )
+    val pagerState = rememberPagerState { pages.size }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(32.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(450.dp)
+                .padding(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Guía de YuliApp 🎈",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = com.example.ui.theme.MagicPrimary
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.weight(1f)
+                ) { pageIndex ->
+                    val page = pages[pageIndex]
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Surface(
+                            modifier = Modifier.size(100.dp),
+                            shape = CircleShape,
+                            color = page.color.copy(alpha = 0.1f)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(page.emoji, fontSize = 56.sp)
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Text(
+                            page.title,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = page.color
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            page.description,
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center,
+                            color = Color.DarkGray,
+                            lineHeight = 20.sp
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
+                    repeat(pages.size) { iteration ->
+                        val color = if (pagerState.currentPage == iteration) com.example.ui.theme.MagicSecondary else Color.LightGray
+                        Box(
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .clip(CircleShape)
+                                .background(color)
+                                .size(8.dp)
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                TextButton(onClick = onDismiss) {
+                    Text("¡ENTENDIDO!", fontWeight = FontWeight.Black, color = com.example.ui.theme.MagicSecondary)
+                }
+            }
+        }
+    }
+}
+
+data class TutorialPage(val title: String, val description: String, val emoji: String, val color: Color)
 
 @Composable
 fun RecordVoiceDialog(

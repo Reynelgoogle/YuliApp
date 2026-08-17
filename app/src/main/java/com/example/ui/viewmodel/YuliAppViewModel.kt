@@ -70,7 +70,7 @@ class YuliAppViewModel(application: Application) : AndroidViewModel(application)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // UI state
-    private val _currentScreen = MutableStateFlow("home") // "home", "colors", "animals", "piano", "family", "drawing"
+    private val _currentScreen = MutableStateFlow("home") // "home", "colors", "animals", "piano", "family", "drawing", "legal"
     val currentScreen = _currentScreen.asStateFlow()
 
     private val _isParentMode = MutableStateFlow(false)
@@ -78,6 +78,9 @@ class YuliAppViewModel(application: Application) : AndroidViewModel(application)
 
     private val _isAudioEnabled = MutableStateFlow(true)
     val isAudioEnabled = _isAudioEnabled.asStateFlow()
+
+    private val _showTutorial = MutableStateFlow(false)
+    val showTutorial = _showTutorial.asStateFlow()
 
     // Recording States
     private val _recordingEntityId = MutableStateFlow<String?>(null)
@@ -101,6 +104,10 @@ class YuliAppViewModel(application: Application) : AndroidViewModel(application)
 
     fun toggleAudio() {
         _isAudioEnabled.value = !_isAudioEnabled.value
+    }
+
+    fun showTutorial(show: Boolean) {
+        _showTutorial.value = show
     }
 
     // Play action for animal sounds
