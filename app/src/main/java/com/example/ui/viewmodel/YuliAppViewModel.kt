@@ -2,7 +2,6 @@ package com.example.ui.viewmodel
 
 import android.app.Application
 import android.content.Context
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.AnimalEntity
@@ -15,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -31,11 +31,11 @@ class YuliAppViewModel(application: Application) : AndroidViewModel(application)
         _backgroundVideoPath.value = sharedPrefs.getString("bg_video_path", null)
         val database = AppDatabase.getDatabase(application)
         repository = YuliAppRepository(database.yuliAppDao())
-        
-        // Populate the database with default items on launch if empty
-        viewModelScope.launch {
-            repository.allAnimals.collect { animals ->
-                if (animals.isEmpty()) {
+
+        // Populate defaults only on the very first launch.
+        if (!sharedPrefs.getBoolean("seeded_defaults", false)) {
+            viewModelScope.launch {
+                if (repository.allAnimals.first().isEmpty()) {
                     val defaultAnimals = listOf(
                         AnimalEntity("cow", "Vaca", "🐮", "#ff4b4b", "COW"),
                         AnimalEntity("pig", "Cerdo", "🐷", "#FCE4EC", "PIG"),
@@ -46,12 +46,8 @@ class YuliAppViewModel(application: Application) : AndroidViewModel(application)
                     )
                     database.yuliAppDao().insertAnimals(defaultAnimals)
                 }
-            }
-        }
 
-        viewModelScope.launch {
-            repository.allFamily.collect { family ->
-                if (family.isEmpty()) {
+                if (repository.allFamily.first().isEmpty()) {
                     val defaultFamily = listOf(
                         FamilyEntity(relation = "Mamá", emoji = "👩", colorHex = "#ff4b4b"),
                         FamilyEntity(relation = "Papá", emoji = "👨", colorHex = "#90CAF9"),
@@ -60,6 +56,8 @@ class YuliAppViewModel(application: Application) : AndroidViewModel(application)
                     )
                     database.yuliAppDao().insertFamilyMembers(defaultFamily)
                 }
+
+                sharedPrefs.edit().putBoolean("seeded_defaults", true).apply()
             }
         }
     }
@@ -72,14 +70,17 @@ class YuliAppViewModel(application: Application) : AndroidViewModel(application)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // UI state
-    private val _currentScreen = MutableStateFlow("home") // "home", "colors", "animals", "piano", "family"
+    private val _currentScreen = MutableStateFlow("home") // "home", "colors", "animals", "piano", "family", "drawing"
     val currentScreen = _currentScreen.asStateFlow()
 
     private val _isParentMode = MutableStateFlow(false)
     val isParentMode = _isParentMode.asStateFlow()
 
+    private val _isAudioEnabled = MutableStateFlow(true)
+    val isAudioEnabled = _isAudioEnabled.asStateFlow()
+
     // Recording States
-    private val _recordingEntityId = MutableStateFlow<String?>(null) // "animal_cow", "family_1", etc.
+    private val _recordingEntityId = MutableStateFlow<String?>(null)
     val recordingEntityId = _recordingEntityId.asStateFlow()
 
     private val _playingCustomSoundPath = MutableStateFlow<String?>(null)
@@ -98,8 +99,13 @@ class YuliAppViewModel(application: Application) : AndroidViewModel(application)
         _isParentMode.value = !_isParentMode.value
     }
 
+    fun toggleAudio() {
+        _isAudioEnabled.value = !_isAudioEnabled.value
+    }
+
     // Play action for animal sounds
     fun playAnimalSound(animal: AnimalEntity) {
+        if (!_isAudioEnabled.value) return
         _playingAudioId.value = animal.id
         if (animal.isCustomSoundEnabled && animal.customSoundPath != null) {
             _playingCustomSoundPath.value = animal.customSoundPath
@@ -125,13 +131,11 @@ class YuliAppViewModel(application: Application) : AndroidViewModel(application)
                         _playingAudioId.value = null
                     },
                     onError = {
-                        // Fallback to offline programmatic synth
                         playAnimalSynthFallback(animal.synthType)
                         _playingAudioId.value = null
                     }
                 )
             } else {
-                // Play a cute pop sound for added custom animals
                 YuliAudioSynth.playPop()
                 _playingAudioId.value = null
             }
@@ -139,6 +143,7 @@ class YuliAppViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun playAnimalSynthFallback(synthType: String) {
+        if (!_isAudioEnabled.value) return
         when (synthType) {
             "COW" -> YuliAudioSynth.playCow()
             "PIG" -> YuliAudioSynth.playPig()
@@ -152,6 +157,7 @@ class YuliAppViewModel(application: Application) : AndroidViewModel(application)
 
     // Play action for family cards
     fun playFamilySound(member: FamilyEntity) {
+        if (!_isAudioEnabled.value) return
         val audioId = "family_${member.id}"
         _playingAudioId.value = audioId
         if (member.isCustomSoundEnabled && member.customSoundPath != null) {
@@ -161,7 +167,6 @@ class YuliAppViewModel(application: Application) : AndroidViewModel(application)
                 _playingAudioId.value = null
             }
         } else {
-            // Synthesize cute arpeggiated major chord chime for family
             YuliAudioSynth.playFamilySparkle()
             _playingAudioId.value = null
         }

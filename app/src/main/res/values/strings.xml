@@ -1,4 +1,54 @@
 <resources>
     <string name="app_name">YuliApp</string>
     <string name="attribution_mic">Acceso al micrófono para grabar voces</string>
+
+    <!-- Legal Titles -->
+    <string name="title_privacy">Privacidad</string>
+    <string name="title_terms">Términos</string>
+    <string name="title_credits">Créditos</string>
+    <string name="title_legal">Información Legal</string>
+
+    <!-- Privacy Policy -->
+    <string name="privacy_policy_text">
+        POLÍTICA DE PRIVACIDAD DE YULIAPP\n\n
+        Reynel Busto González ("nosotros", "nuestro" o "el Desarrollador") respeta la privacidad de sus usuarios, especialmente de los más pequeños. Esta Política de Privacidad explica cómo recopilamos, usamos y protegemos la información en YuliApp.\n\n
+        1. Recopilación de Información\n
+        YuliApp está diseñada como una herramienta de juego sensorial fuera de línea.\n
+        - Datos generados por el usuario: Las fotos y grabaciones de voz realizadas en el "Modo Padres" se almacenan exclusivamente de forma local en el dispositivo del usuario. No tenemos acceso a estos archivos ni se envían a servidores externos.\n
+        - Datos de uso: Podemos recopilar información técnica anónima (como el modelo de dispositivo y errores del sistema) únicamente para mejorar el rendimiento de la aplicación.\n\n
+        2. Privacidad Infantil\n
+        Dado que YuliApp está dirigida a niños de 9 a 12 meses, cumplimos estrictamente con las normativas de protección infantil. No solicitamos nombres, correos electrónicos ni ninguna información que identifique personalmente al menor. Todas las funciones de personalización están protegidas por un bloqueo parental.\n\n
+        3. Servicios de Terceros\n
+        Nuestra aplicación utiliza librerías estándar de la industria (como Firebase de Google) que pueden recopilar identificadores de publicidad anónimos conforme a sus propias políticas de privacidad para fines estadísticos.\n\n
+        4. Contacto\n
+        Si tiene preguntas sobre esta política, contáctenos en: reynelbusto@gmail.com.
+    </string>
+
+    <!-- Terms of Use -->
+    <string name="terms_text">
+        TÉRMINOS Y CONDICIONES DE SERVICIO\n\n
+        Al descargar o usar YuliApp, usted acepta estos términos. Si no está de acuerdo, le rogamos que desinstale la aplicación.\n\n
+        1. Uso Autorizado y Supervisión\n
+        YuliApp es una aplicación de entretenimiento sensorial. El uso de la aplicación por parte de menores debe ser supervisado en todo momento por un adulto responsable. El Desarrollador no se hace responsable del uso inadecuado del dispositivo por parte del menor.\n\n
+        2. Propiedad Intelectual\n
+        Todo el contenido original de YuliApp, incluyendo código, diseño visual y sonidos sintetizados, es propiedad de Reynel Busto González y está protegido por las leyes de propiedad intelectual de la República de Cuba y tratados internacionales.\n\n
+        3. Exención de Responsabilidad\n
+        La aplicación se proporciona "tal cual", sin garantías de ningún tipo. No garantizamos que el funcionamiento sea ininterrumpido o libre de errores. En ningún caso el Desarrollador será responsable por daños indirectos, incidentales o pérdida de datos derivados del uso de la app.\n\n
+        4. Legislación Aplicable\n
+        Estos términos se rigen por las leyes de la República de Cuba. Cualquier disputa se someterá a la jurisdicción de los tribunales de dicho país.
+    </string>
+
+    <!-- Credits -->
+    <string name="credits_text">
+        CRÉDITOS Y SOFTWARE DE TERCEROS\n\n
+        YuliApp es posible gracias a la comunidad de software de código abierto. Agradecemos el uso de las siguientes tecnologías:\n\n
+        - Jetpack Compose &amp; Material 3: Licencia Apache 2.0.\n
+        - Room Persistence Library: Licencia Apache 2.0.\n
+        - Retrofit &amp; OkHttp (Square Inc.): Licencia Apache 2.0.\n
+        - Coil (Image Loading): Licencia Apache 2.0.\n
+        - Moshi (JSON Parsing): Licencia Apache 2.0.\n
+        - Firebase: Sujeto a los Términos de Servicio de Google.\n
+        - Iconografía: Material Design Icons de Google.\n\n
+        Desarrollado con amor para Yuli.
+    </string>
 </resources>

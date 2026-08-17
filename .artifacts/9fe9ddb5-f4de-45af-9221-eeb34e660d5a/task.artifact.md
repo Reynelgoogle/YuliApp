@@ -1,0 +1,7 @@
+- [ ] Actualizar `Color.kt` con la paleta "Mundo Mágico"
+- [ ] Implementar `MagicBackground` (Sol y Nubes animadas) en `MainActivity.kt`
+- [ ] Crear el componente `MagicButton` con efecto 3D
+- [ ] Actualizar `HomeScreen` con el nuevo diseño
+- [ ] Restaurar la lógica de canciones y guía visual en `PianoScreen`
+- [ ] Restaurar sección completa de donaciones y contacto en `OptionsScreen`
+- [ ] Verificar build y navegación

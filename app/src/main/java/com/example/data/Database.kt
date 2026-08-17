@@ -89,7 +89,10 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "yuliapp_database"
                 )
-                .fallbackToDestructiveMigration()
+                // IMPORTANT: Do NOT use fallbackToDestructiveMigration() here. It silently
+                // wipes the user's custom animals, family members, photos and recordings.
+                // For future schema changes, add explicit migrations via .addMigrations(...)
+                // and bump the @Database version.
                 .build()
                 INSTANCE = instance
                 instance

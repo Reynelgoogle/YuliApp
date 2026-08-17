@@ -1,22 +1,38 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# YuliApp 🎈
 
-# Run and deploy your AI Studio app
+App de juego sensorial para bebés de 9 a 12 meses, con colores altamente contrastados, sonidos táctiles y una interfaz pensada para que los más pequeños la usen por sí solos, mientras los padres personalizan el contenido desde un modo protegido.
 
-This contains everything you need to run your app locally.
+## 🎮 Juegos incluidos
 
-View your app in AI Studio: https://ai.studio/apps/d65e33ae-901b-4f61-9011-7edebddb90c5
+- **🎨 Colores** — Burbujas de colores que suenan al tocarlas, con un modo juego (quiz) de formas y colores.
+- **🐮 La Granja de Sonidos** — Animales con sonidos reales (vía streaming con fallback sintetizado) y opción de grabar la voz de mamá/papá.
+- **🎹 Piano** — Piano con teclas blancas y negras, multitáctil, dos instrumentos y canciones infantiles guiadas.
+- **👩‍❤️‍👨 Mi Familia** — Tarjetas tipo polaroid con fotos, voz personalizada y avatares.
 
-## Run Locally
+## 👨‍👩‍👧 Modo Padres
 
-**Prerequisites:**  [Android Studio](https://developer.android.com/studio)
+- Acceso manteniendo presionado el candado **2.5 segundos** en la pantalla de inicio.
+- Permite grabar o subir voces, fotos, añadir/eliminar animales y familiares, y personalizar el fondo con un video en bucle.
 
+## 🛠️ Stack
 
-1. Open Android Studio
-2. Select **Open** and choose the directory containing this project
-3. Allow Android Studio to fix any incompatibilities as it imports the project.
-4. Create a file named `.env` in the project directory and set `GEMINI_API_KEY` in that file to your Gemini API key (see `.env.example` for an example)
-5. Remove this line from the app's `build.gradle.kts` file: `signingConfig = signingConfigs.getByName("debugConfig")`
-6. Run the app on an emulator or physical device
-7. If you have already published your app in AI Studio, please [request upload key reset](https://support.google.com/googleplay/android-developer/answer/9842756#zippy=%2Crequest-an-upload-key-reset) in Google Play Console.
+- **Kotlin** + **Jetpack Compose** (Material 3)
+- **Room** para persistencia local (animales, familia)
+- **AudioTrack** para síntesis de sonidos y **MediaRecorder/MediaPlayer** para grabación y reproducción
+- **Coil** para imágenes
+- **Robolectric + Roborazzi** para tests unitarios y screenshots
+- Gradle KTS con version catalog
+
+## ▶️ Cómo ejecutar
+
+1. Abre el proyecto en **Android Studio**.
+2. Crea un archivo `.env` en la raíz del proyecto con tu claves (ver `.env.example`).
+3. Ejecuta la app en un emulador o dispositivo físico.
+
+## 🧪 Tests
+
+```bash
+./gradlew testDebugUnitTest
+```
+
+> **Nota para Windows con usuario sin espacios:** si tu `user.home` contiene un espacio, Robolectric deja de encontrar sus librerías nativas; el `build.gradle.kts` ya lo resuelve apuntando temporalmente el `user.home` de los tests al directorio temporal del sistema.

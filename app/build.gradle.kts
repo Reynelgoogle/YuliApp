@@ -50,7 +50,24 @@ android {
     compose = true
     buildConfig = true
   }
-  testOptions { unitTests { isIncludeAndroidResources = true } }
+  testOptions {
+    unitTests {
+      isIncludeAndroidResources = true
+      all {
+        val userHome = System.getProperty("user.home")
+        if (userHome.contains(" ")) {
+          // Robolectric fails on Windows when user.home contains a space: it URL-encodes the
+          // maven cache path as "%20", so the native runtime jar can never be found. Point the
+          // unit test JVM at a space-free home (the system temp dir) to work around it.
+          val spaceFreeHome = File(
+            System.getProperty("java.io.tmpdir"),
+            "yuliapp-robolectric-home"
+          ).apply { mkdirs() }
+          it.systemProperty("user.home", spaceFreeHome.absolutePath)
+        }
+      }
+    }
+  }
 }
 
 // Configure the Secrets Gradle Plugin to use .env and .env.example files
