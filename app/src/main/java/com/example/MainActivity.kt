@@ -69,6 +69,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -280,7 +281,7 @@ fun MagicBackground() {
         drawCloud(Offset(size.width * 0.75f + cloudDrift2.dp.toPx(), size.height * 0.15f), 60.dp.toPx())
         drawCloud(Offset(size.width * 0.6f + cloudDrift1.dp.toPx() * 0.5f, size.height * 0.35f), 90.dp.toPx())
 
-        // Horizon / Ground
+        // Friendly grass ground - child-friendly green instead of gray
         val groundPath = Path().apply {
             moveTo(-100f, size.height * 0.85f)
             quadraticTo(size.width / 2, size.height * 0.75f, size.width + 100f, size.height * 0.85f)
@@ -290,7 +291,7 @@ fun MagicBackground() {
         }
         drawPath(
             path = groundPath,
-            color = Color(0xFFEEEEEE)
+            color = Color(0xFF66BB6A)  // Friendly grass green
         )
     }
 }
@@ -370,9 +371,11 @@ fun MagicButton(
                     title,
                     color = textColor,
                     fontWeight = FontWeight.ExtraBold,
-                    fontSize = (size.value * 0.1).sp,
+                    fontSize = (size.value * 0.09).sp,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 8.dp)
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(horizontal = 12.dp)
                 )
             }
         }
