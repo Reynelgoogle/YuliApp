@@ -30,8 +30,12 @@ class AudioRecordManager(private val context: Context) {
         }
 
         try {
-            @Suppress("DEPRECATION")
-            val recorder = MediaRecorder()
+            val recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                MediaRecorder(context)
+            } else {
+                @Suppress("DEPRECATION")
+                MediaRecorder()
+            }
 
             recorder.setAudioSource(MediaRecorder.AudioSource.MIC)
             recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)

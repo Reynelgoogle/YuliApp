@@ -96,6 +96,9 @@ class YuliAppViewModel(application: Application) : AndroidViewModel(application)
         _currentScreen.value = screen
         audioRecordManager.stopPlayback()
         _playingAudioId.value = null
+        // Avoid orphan recordings running invisibly after navigating away:
+        // stop the mic and clear state (partial take is discarded).
+        cancelRecording()
     }
 
     fun toggleParentMode() {
@@ -180,11 +183,20 @@ class YuliAppViewModel(application: Application) : AndroidViewModel(application)
     }
 
     // Voice recording management
-    fun startRecording(entityId: String) {
+    // Returns true if recording actually started (false = mic permission denied or recorder error).
+    fun startRecording(entityId: String): Boolean {
         val path = audioRecordManager.startRecording(entityId)
         if (path != null) {
             _recordingEntityId.value = entityId
+            return true
         }
+        return false
+    }
+
+    // Stops an ongoing recording without saving (used when leaving the screen / dismissing).
+    fun cancelRecording() {
+        audioRecordManager.stopRecording()
+        _recordingEntityId.value = null
     }
 
     fun stopRecordingAndSaveAnimal(animal: AnimalEntity) {

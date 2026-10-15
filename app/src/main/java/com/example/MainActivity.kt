@@ -1325,6 +1325,38 @@ fun BottomNavItem(emoji: String, label: String, isActive: Boolean, onClick: () -
     }
 }
 
+// Requests RECORD_AUDIO at runtime (required since Android 6.0).
+// Without this, MediaRecorder throws SecurityException and recording silently fails.
+@Composable
+fun rememberMicRecordPermissionHandler(): ((onGranted: () -> Unit) -> Unit) {
+    val context = LocalContext.current
+    var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) {
+            pendingAction?.invoke()
+        } else {
+            Toast.makeText(
+                context,
+                "Sin permiso de micrófono no se puede grabar. Actívalo en los Ajustes.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+        pendingAction = null
+    }
+    return { onGranted ->
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            onGranted()
+        } else {
+            pendingAction = onGranted
+            launcher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+}
+
 // --- Animals Screen ---
 @Composable
 fun AnimalsScreen(viewModel: YuliAppViewModel) {
@@ -1333,6 +1365,8 @@ fun AnimalsScreen(viewModel: YuliAppViewModel) {
     val recordingEntityId by viewModel.recordingEntityId.collectAsState()
     var showAddAnimalDialog by remember { mutableStateOf(false) }
     var showRecordDialog by remember { mutableStateOf<AnimalEntity?>(null) }
+    val context = LocalContext.current
+    val requestMicAndRecord = rememberMicRecordPermissionHandler()
 
     val audioLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { selectedUri ->
@@ -1415,7 +1449,18 @@ fun AnimalsScreen(viewModel: YuliAppViewModel) {
             RecordVoiceDialog(
                 title = "Grabar voz para ${showRecordDialog!!.name}",
                 isRecording = recordingEntityId == "animal_${showRecordDialog!!.id}",
-                onStart = { viewModel.startRecording("animal_${showRecordDialog!!.id}") },
+                onStart = {
+                    requestMicAndRecord {
+                        val started = viewModel.startRecording("animal_${showRecordDialog!!.id}")
+                        if (!started) {
+                            Toast.makeText(
+                                context,
+                                "No se pudo iniciar la grabación. Revisa el permiso del micrófono.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                },
                 onStop = { viewModel.stopRecordingAndSaveAnimal(showRecordDialog!!) },
                 onImport = { audioLauncher.launch("audio/*") },
                 onDismiss = { showRecordDialog = null }
@@ -1505,6 +1550,23 @@ fun AnimalCard(
                     fontSize = 20.sp
                 )
             }
+
+            // Visible badge so recording state is obvious even on the card.
+            if (isRecording) {
+                Surface(
+                    modifier = Modifier.align(Alignment.BottomStart).padding(12.dp),
+                    color = Color.Red,
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "● GRABANDO — toca 🎙 para detener",
+                        color = Color.White,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 11.sp,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
+            }
         }
     }
 }
@@ -1517,6 +1579,8 @@ fun FamilyScreen(viewModel: YuliAppViewModel) {
     val recordingEntityId by viewModel.recordingEntityId.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
     var showRecordDialog by remember { mutableStateOf<FamilyEntity?>(null) }
+    val context = LocalContext.current
+    val requestMicAndRecord = rememberMicRecordPermissionHandler()
 
     val photoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { selectedUri ->
@@ -1609,7 +1673,18 @@ fun FamilyScreen(viewModel: YuliAppViewModel) {
             RecordVoiceDialog(
                 title = "Configurar a ${showRecordDialog!!.relation}",
                 isRecording = recordingEntityId == "family_${showRecordDialog!!.id}",
-                onStart = { viewModel.startRecording("family_${showRecordDialog!!.id}") },
+                onStart = {
+                    requestMicAndRecord {
+                        val started = viewModel.startRecording("family_${showRecordDialog!!.id}")
+                        if (!started) {
+                            Toast.makeText(
+                                context,
+                                "No se pudo iniciar la grabación. Revisa el permiso del micrófono.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                },
                 onStop = { viewModel.stopRecordingAndSaveFamily(showRecordDialog!!) },
                 onImport = { audioLauncher.launch("audio/*") },
                 onDismiss = { showRecordDialog = null },
@@ -1707,6 +1782,23 @@ fun FamilyCard(
                     IconButton(onClick = onDelete, modifier = Modifier.background(Color.White.copy(alpha = 0.8f), CircleShape).size(30.dp)) {
                         Icon(Icons.Default.Delete, null, tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
                     }
+                }
+            }
+
+            // Visible badge so recording state is obvious even on the card.
+            if (isRecording) {
+                Surface(
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp),
+                    color = Color.Red,
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "● GRABANDO",
+                        color = Color.White,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 11.sp,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
                 }
             }
         }
@@ -2431,7 +2523,33 @@ fun RecordVoiceDialog(
     onDismiss: () -> Unit,
     extraContent: @Composable () -> Unit = {}
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    // Timer visible + auto-stop at 30s so the user always knows when recording ends.
+    var elapsedSecs by remember { mutableIntStateOf(0) }
+    LaunchedEffect(isRecording) {
+        if (isRecording) {
+            elapsedSecs = 0
+            while (true) {
+                delay(1000)
+                elapsedSecs++
+                if (elapsedSecs >= 30) {
+                    onStop()
+                    break
+                }
+            }
+        } else {
+            elapsedSecs = 0
+        }
+    }
+    val timeText = "%02d:%02d".format(elapsedSecs / 60, elapsedSecs % 60)
+    val blinkAlpha by rememberInfiniteTransition(label = "rec_blink").animateFloat(
+        initialValue = 1f,
+        targetValue = 0.25f,
+        animationSpec = infiniteRepeatable(tween(500), RepeatMode.Reverse),
+        label = "blink"
+    )
+
+    // Block accidental dismiss (tap outside / back) while recording to avoid orphan recordings.
+    Dialog(onDismissRequest = { if (!isRecording) onDismiss() }) {
         Card(
             shape = RoundedCornerShape(32.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -2442,19 +2560,55 @@ fun RecordVoiceDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(title, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Clear state banner: user always sees if recording or idle + elapsed time.
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (isRecording) Color.Red else Color(0xFFE8F5E9),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (isRecording) {
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .graphicsLayer(alpha = blinkAlpha)
+                                    .background(Color.White, CircleShape)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                        Text(
+                            text = if (isRecording) "● GRABANDO $timeText / 00:30" else "Listo para grabar",
+                            color = if (isRecording) Color.White else Color(0xFF2E7D32),
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Box(
                     modifier = Modifier
                         .size(100.dp)
                         .clip(CircleShape)
-                        .background(if (isRecording) Color.Red.copy(alpha = 0.1f) else Color(0xFFF5F5F5))
+                        .background(if (isRecording) Color.Red else Color(0xFFF5F5F5))
+                        .border(
+                            width = if (isRecording) 4.dp else 0.dp,
+                            color = if (isRecording) Color.Red.copy(alpha = 0.3f) else Color.Transparent,
+                            shape = CircleShape
+                        )
                         .clickable {
                             if (isRecording) onStop() else onStart()
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    val scale by rememberInfiniteTransition().animateFloat(
+                    val scale by rememberInfiniteTransition(label = "pulse").animateFloat(
                         initialValue = 1f,
                         targetValue = 1.2f,
                         animationSpec = infiniteRepeatable(tween(500), RepeatMode.Reverse),
@@ -2462,25 +2616,37 @@ fun RecordVoiceDialog(
                     )
                     Icon(
                         imageVector = if (isRecording) Icons.Default.Stop else Icons.Default.Mic,
-                        contentDescription = null,
+                        contentDescription = if (isRecording) "Detener grabación" else "Iniciar grabación",
                         modifier = Modifier
                             .size(48.dp)
                             .scale(if (isRecording) scale else 1f),
-                        tint = if (isRecording) Color.Red else Color(0xFF455A64)
+                        tint = if (isRecording) Color.White else Color(0xFF455A64)
                     )
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = if (isRecording) "Grabando..." else "Toca para grabar",
+                    text = if (isRecording) "Toca ⏹ para detener y guardar" else "Toca 🎙 para grabar",
                     color = if (isRecording) Color.Red else Color.Gray,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
                 )
 
+                if (isRecording) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    LinearProgressIndicator(
+                        progress = (elapsedSecs / 30f).coerceIn(0f, 1f),
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color.Red,
+                        trackColor = Color.Red.copy(alpha = 0.15f)
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 Button(
                     onClick = onImport,
+                    enabled = !isRecording,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                 ) {
@@ -2492,8 +2658,24 @@ fun RecordVoiceDialog(
                 extraContent()
 
                 Spacer(modifier = Modifier.height(16.dp))
-                TextButton(onClick = onDismiss) {
-                    Text("Listo", fontWeight = FontWeight.Bold)
+                Button(
+                    onClick = {
+                        if (isRecording) {
+                            onStop()
+                        }
+                        onDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isRecording) Color.Red else Color(0xFFEEEEEE),
+                        contentColor = if (isRecording) Color.White else Color.DarkGray
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        if (isRecording) "⏹ Detener y guardar" else "Listo",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
